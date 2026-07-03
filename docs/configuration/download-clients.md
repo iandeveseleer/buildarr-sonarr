@@ -175,6 +175,24 @@ peer-to-peer file sharing protocol to retrieve media files.
         - additional_tags
         - start_on_add
 
+## Freebox Download
+
+##### ::: buildarr_sonarr.config.download_clients.download_clients.FreeboxDownloadClient
+    options:
+      members:
+        - type
+        - host
+        - port
+        - use_ssl
+        - api_url
+        - app_id
+        - app_token
+        - destination_directory
+        - category
+        - recent_priority
+        - older_priority
+        - add_paused
+
 ## Hadouken
 
 ##### ::: buildarr_sonarr.config.download_clients.download_clients.HadoukenDownloadClient

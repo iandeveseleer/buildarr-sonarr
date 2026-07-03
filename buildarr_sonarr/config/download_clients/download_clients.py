@@ -134,6 +134,20 @@ class FloodMediaTag(BaseEnum):
     network = 6
 
 
+class FreeboxPriority(BaseEnum):
+    """
+    Freebox download queue priority.
+
+    Values:
+
+    * `last` (Last)
+    * `first` (First)
+    """
+
+    last = 0
+    first = 1
+
+
 class QbittorrentPriority(BaseEnum):
     """
     qBittorrent queue priority.
@@ -1150,6 +1164,150 @@ class FloodDownloadClient(TorrentDownloadClient):
     ]
 
 
+class FreeboxDownloadClient(TorrentDownloadClient):
+    """
+    Download client for the [Freebox](https://www.free.fr) built-in
+    BitTorrent download manager (Freebox Download).
+    """
+
+    type: Literal["freebox"] = "freebox"
+    """
+    Type value associated with this kind of download client.
+    """
+
+    host: NonEmptyStr = "mafreebox.freebox.fr"  # type: ignore[assignment]
+    """
+    Hostname or host IP address of the Freebox.
+
+    The default of `mafreebox.freebox.fr` will only work if using a DNS server
+    provided by Free (i.e. when the Sonarr instance is behind the Freebox).
+    """
+
+    port: Port = 443
+    """
+    Port used to access the Freebox interface.
+    """
+
+    use_ssl: bool = True
+    """
+    Use a secure connection when connecting to the Freebox API.
+
+    Enabled by default, as the default host name will only work over HTTPS.
+    """
+
+    api_url: NonEmptyStr = "/api/v3/"  # type: ignore[assignment]
+    """
+    Freebox API base URL, e.g. `http(s)://[host]:[port]/[api_url]`.
+    """
+
+    app_id: NonEmptyStr
+    """
+    The App ID (`app_id`) of the token created to grant Sonarr access to the Freebox API.
+    """
+
+    app_token: Password
+    """
+    The App token generated when granting Sonarr access to the Freebox API.
+    """
+
+    destination_directory: Optional[str] = None
+    """
+    Optional location to put downloads into.
+
+    Leave blank, set to `null` or undefined to use the default Freebox download location.
+
+    `destination_directory` and `category` are mutually exclusive,
+    only one of them can be set at a time.
+    """
+
+    category: Optional[str] = None
+    """
+    Associate media from Sonarr with a category.
+    Creates a `[category]` subdirectory in the output directory.
+
+    Adding a category specific to Sonarr avoids conflicts with unrelated non-Sonarr downloads.
+    Using a category is optional, but strongly recommended.
+
+    `destination_directory` and `category` are mutually exclusive,
+    only one of them can be set at a time.
+    """
+
+    recent_priority: FreeboxPriority = FreeboxPriority.last
+    """
+    Priority to use when grabbing episodes that aired within the last 14 days.
+
+    Values:
+
+    * `last`
+    * `first`
+    """
+
+    older_priority: FreeboxPriority = FreeboxPriority.last
+    """
+    Priority to use when grabbing episodes that aired over 14 days ago.
+
+    Values:
+
+    * `last`
+    * `first`
+    """
+
+    add_paused: bool = False
+    """
+    Add media to the download client in the paused state.
+    """
+
+    _implementation_name: str = "Freebox Download"
+    _implementation: str = "TorrentFreeboxDownload"
+    _config_contract: str = "FreeboxDownloadSettings"
+    _remote_map: List[RemoteMapEntry] = [
+        ("host", "host", {"is_field": True}),
+        ("port", "port", {"is_field": True}),
+        ("use_ssl", "useSsl", {"is_field": True}),
+        ("api_url", "apiUrl", {"is_field": True}),
+        ("app_id", "appId", {"is_field": True}),
+        ("app_token", "appToken", {"is_field": True}),
+        (
+            "destination_directory",
+            "destinationDirectory",
+            {
+                "is_field": True,
+                "field_default": None,
+                "decoder": lambda v: v or None,
+                "encoder": lambda v: v or "",
+            },
+        ),
+        (
+            "category",
+            "category",
+            {
+                "is_field": True,
+                "field_default": None,
+                "decoder": lambda v: v or None,
+                "encoder": lambda v: v or "",
+            },
+        ),
+        ("recent_priority", "recentPriority", {"is_field": True}),
+        ("older_priority", "olderPriority", {"is_field": True}),
+        ("add_paused", "addPaused", {"is_field": True}),
+    ]
+
+    @validator("category")
+    def category_destination_directory_mutual_exclusion(
+        cls,
+        value: Optional[str],
+        values: Mapping[str, Any],
+    ) -> Optional[str]:
+        category = value
+        destination_directory: Optional[str] = values.get("destination_directory", None)
+        if category and destination_directory:
+            raise ValueError(
+                "'category' and 'destination_directory' are mutually exclusive "
+                "on a Freebox download client",
+            )
+        return category
+
+
 class HadoukenDownloadClient(TorrentDownloadClient):
     """
     Hadouken download client.
@@ -1849,6 +2007,7 @@ DOWNLOADLCLIENT_TYPES: Tuple[Type[DownloadClient], ...] = (
     DelugeDownloadClient,
     DownloadstationTorrentDownloadClient,
     FloodDownloadClient,
+    FreeboxDownloadClient,
     HadoukenDownloadClient,
     QbittorrentDownloadClient,
     RtorrentDownloadClient,
