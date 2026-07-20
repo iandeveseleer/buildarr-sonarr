@@ -16,30 +16,15 @@
 Sonarr plugin configuration utility classes and functions.
 """
 
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from buildarr.config import ConfigBase
-from pydantic import ConstrainedStr
 
 if TYPE_CHECKING:
-    from ..secrets import SonarrSecrets
-
-    class SonarrConfigBase(ConfigBase[SonarrSecrets]):
-        ...
-
-else:
-
-    class SonarrConfigBase(ConfigBase):
-        ...
+    from ..secrets import SonarrSecrets  # noqa: F401
 
 
-class TraktAuthUser(ConstrainedStr):
-    """
-    Constrained string type to make the Trakt auth user case-insensitive.
-    """
-
-    min_length = 1
-    to_lower = True
+class SonarrConfigBase(ConfigBase["SonarrSecrets"]):
+    pass

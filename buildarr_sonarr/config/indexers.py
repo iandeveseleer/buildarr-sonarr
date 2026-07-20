@@ -16,12 +16,12 @@
 Sonarr plugin indexers settings configuration.
 """
 
-
 from __future__ import annotations
 
 from logging import getLogger
 from typing import (
     Any,
+    ClassVar,
     Dict,
     Iterable,
     List,
@@ -37,7 +37,7 @@ from typing import (
 
 from buildarr.config import RemoteMapEntry
 from buildarr.types import BaseEnum, NonEmptyStr, Password, RssUrl
-from pydantic import AnyHttpUrl, Field, PositiveInt, validator
+from pydantic import AnyHttpUrl, Field, NonNegativeInt, PositiveInt, field_validator
 from typing_extensions import Annotated, Self
 
 from ..api import api_delete, api_get, api_post, api_put
@@ -133,7 +133,7 @@ class Indexer(SonarrConfigBase):
     If enabled, use this indexer for manual interactive searches.
     """
 
-    priority: int = Field(25, ge=1, le=50, alias="indexer_priority")
+    priority: Annotated[int, Field(ge=1, le=50, alias="indexer_priority")] = 25
     """
     Priority of this indexer to prefer one indexer over another in release tiebreaker scenarios.
 
@@ -154,10 +154,10 @@ class Indexer(SonarrConfigBase):
     Leave blank to use with all series.
     """
 
-    _implementation: str
-    _implementation_name: str
-    _config_contract: str
-    _remote_map: List[RemoteMapEntry]
+    _implementation: ClassVar[str]
+    _implementation_name: ClassVar[str]
+    _config_contract: ClassVar[str]
+    _remote_map: ClassVar[List[RemoteMapEntry]]
 
     @classmethod
     def _get_base_remote_map(
@@ -346,7 +346,7 @@ class FanzubIndexer(UsenetIndexer):
     _implementation = "Fanzub"
     _implementation_name = "Fanzub"
     _config_contract = "FanzubSettings"
-    _remote_map: List[RemoteMapEntry] = [
+    _remote_map: ClassVar[List[RemoteMapEntry]] = [
         ("rss_url", "rssUrl", {"is_field": True}),
         ("anime_standard_format_search", "animeStandardFormatSearch", {"is_field": True}),
     ]
@@ -369,7 +369,7 @@ class NewznabIndexer(UsenetIndexer):
     URL of the Newznab-compatible indexing site.
     """
 
-    api_path: NonEmptyStr = "/api"  # type: ignore[assignment]
+    api_path: NonEmptyStr = "/api"
     """
     Newznab API endpoint. Usually `/api`.
     """
@@ -440,7 +440,7 @@ class NewznabIndexer(UsenetIndexer):
     _implementation = "Newznab"
     _implementation_name = "Newznab"
     _config_contract = "NewznabSettings"
-    _remote_map: List[RemoteMapEntry] = [
+    _remote_map: ClassVar[List[RemoteMapEntry]] = [
         ("url", "baseUrl", {"is_field": True}),
         ("api_path", "apiPath", {"is_field": True}),
         ("api_key", "apiKey", {"is_field": True}),
@@ -462,7 +462,8 @@ class NewznabIndexer(UsenetIndexer):
         ),
     ]
 
-    @validator("categories", "anime_categories")
+    @field_validator("categories", "anime_categories")
+    @classmethod
     def validate_categories(
         cls,
         value: Iterable[Union[NabCategory, int]],
@@ -493,7 +494,7 @@ class OmgwtfnzbsIndexer(UsenetIndexer):
     API key for the OmgWtfNZBs API.
     """
 
-    delay: int = Field(30, ge=0)  # minutes
+    delay: NonNegativeInt = 30  # minutes
     """
     Time (in minutes) to delay new NZBs before they appear on the RSS feed.
     """
@@ -501,7 +502,7 @@ class OmgwtfnzbsIndexer(UsenetIndexer):
     _implementation = "Omgwtfnzbs"
     _implementation_name = "omgwtfnzbs"
     _config_contract = "OmgwtfnzbsSettings"
-    _remote_map: List[RemoteMapEntry] = [
+    _remote_map: ClassVar[List[RemoteMapEntry]] = [
         ("username", "username", {"is_field": True}),
         ("api_key", "apiKey", {"is_field": True}),
         ("delay", "delay", {"is_field": True}),
@@ -518,7 +519,7 @@ class BroadcasthenetIndexer(TorrentIndexer):
     Type value associated with this kind of indexer.
     """
 
-    api_url: AnyHttpUrl = "https://api.broadcasthe.net"  # type: ignore[assignment]
+    api_url: AnyHttpUrl = AnyHttpUrl("https://api.broadcasthe.net")
     """
     BroadcasTheNet API URL.
     """
@@ -531,7 +532,7 @@ class BroadcasthenetIndexer(TorrentIndexer):
     _implementation = "BroadcastheNet"
     _implementation_name = "BroadcasTheNet"
     _config_contract = "BroadcastheNetSettings"
-    _remote_map: List[RemoteMapEntry] = [
+    _remote_map: ClassVar[List[RemoteMapEntry]] = [
         ("api_url", "apiUrl", {"is_field": True}),
         ("api_key", "apiKey", {"is_field": True}),
     ]
@@ -557,7 +558,7 @@ class FilelistIndexer(TorrentIndexer):
     FileList account API key.
     """
 
-    api_url: AnyHttpUrl = "https://filelist.io"  # type: ignore[assignment]
+    api_url: AnyHttpUrl = AnyHttpUrl("https://filelist.io")
     """
     FileList API URL.
 
@@ -604,7 +605,7 @@ class FilelistIndexer(TorrentIndexer):
     _implementation = "FileList"
     _implementation_name = "FileList"
     _config_contract = "FilelistSettings"
-    _remote_map: List[RemoteMapEntry] = [
+    _remote_map: ClassVar[List[RemoteMapEntry]] = [
         ("username", "username", {"is_field": True}),
         ("passkey", "passKey", {"is_field": True}),
         ("api_url", "apiUrl", {"is_field": True}),
@@ -641,7 +642,7 @@ class HdbitsIndexer(TorrentIndexer):
     HDBits API key assigned to the account.
     """
 
-    api_url: AnyHttpUrl = "https://hdbits.org"  # type: ignore[assignment]
+    api_url: AnyHttpUrl = AnyHttpUrl("https://hdbits.org")
     """
     HDBits API URL.
 
@@ -652,7 +653,7 @@ class HdbitsIndexer(TorrentIndexer):
     _implementation = "HDBits"
     _implementation_name = "HDBits"
     _config_contract = "HDBitsSettings"
-    _remote_map: List[RemoteMapEntry] = [
+    _remote_map: ClassVar[List[RemoteMapEntry]] = [
         ("username", "username", {"is_field": True}),
         ("api_key", "apiKey", {"is_field": True}),
         ("api_url", "apiUrl", {"is_field": True}),
@@ -685,7 +686,7 @@ class IptorrentsIndexer(TorrentIndexer):
     _implementation = "IPTorrents"
     _implementation_name = "IP Torrents"
     _config_contract = "IptorrentsSettings"
-    _remote_map: List[RemoteMapEntry] = [
+    _remote_map: ClassVar[List[RemoteMapEntry]] = [
         ("feed_url", "feedUrl", {"is_field": True}),
     ]
 
@@ -723,7 +724,7 @@ class NyaaIndexer(TorrentIndexer):
     _implementation = "Nyaa"
     _implementation_name = "Nyaa"
     _config_contract = "NyaaSettings"
-    _remote_map: List[RemoteMapEntry] = [
+    _remote_map: ClassVar[List[RemoteMapEntry]] = [
         ("website_url", "websiteUrl", {"is_field": True}),
         ("anime_standard_format_search", "animeStandardFormatSearch", {"is_field": True}),
         (
@@ -762,7 +763,7 @@ class RarbgIndexer(TorrentIndexer):
     _implementation = "Rarbg"
     _implementation_name = "Rarbg"
     _config_contract = "RarbgSettings"
-    _remote_map: List[RemoteMapEntry] = [
+    _remote_map: ClassVar[List[RemoteMapEntry]] = [
         ("api_url", "apiUrl", {"is_field": True}),
         ("ranked_only", "rankedOnly", {"is_field": True}),
         (
@@ -813,7 +814,7 @@ class TorrentrssfeedIndexer(TorrentIndexer):
     _implementation = "TorrentRssIndexer"
     _implementation_name = "Torrent RSS Feed"
     _config_contract = "TorrentRssIndexerSettings"
-    _remote_map: List[RemoteMapEntry] = [
+    _remote_map: ClassVar[List[RemoteMapEntry]] = [
         ("full_rss_feed_url", "feedUrl", {"is_field": True}),
         (
             "cookie",
@@ -840,7 +841,7 @@ class TorrentleechIndexer(TorrentIndexer):
     # NOTE: automatic_search and interactive_search are not supported
     # by this indexer, therefore its value is ignored.
 
-    website_url: AnyHttpUrl = "http://rss.torrentleech.org"  # type: ignore[assignment]
+    website_url: AnyHttpUrl = AnyHttpUrl("http://rss.torrentleech.org")
     """
     TorrentLeech feed API URL.
     """
@@ -853,7 +854,7 @@ class TorrentleechIndexer(TorrentIndexer):
     _implementation = "Torrentleech"
     _implementation_name = "TorrentLeech"
     _config_contract = "TorrentleechSettings"
-    _remote_map: List[RemoteMapEntry] = [
+    _remote_map: ClassVar[List[RemoteMapEntry]] = [
         ("website_url", "baseUrl", {"is_field": True}),
         ("api_key", "apiKey", {"is_field": True}),
     ]
@@ -876,7 +877,7 @@ class TorznabIndexer(TorrentIndexer):
     URL of the Torznab-compatible indexing site.
     """
 
-    api_path: NonEmptyStr = "/api"  # type: ignore[assignment]
+    api_path: NonEmptyStr = "/api"
     """
     Tornab API endpoint. Usually `/api`.
     """
@@ -946,7 +947,7 @@ class TorznabIndexer(TorrentIndexer):
     _implementation = "Torznab"
     _implementation_name = "Torznab"
     _config_contract = "TorznabSettings"
-    _remote_map: List[RemoteMapEntry] = [
+    _remote_map: ClassVar[List[RemoteMapEntry]] = [
         ("url", "baseUrl", {"is_field": True}),
         ("api_path", "apiPath", {"is_field": True}),
         ("api_key", "apiKey", {"is_field": True}),
@@ -968,7 +969,8 @@ class TorznabIndexer(TorrentIndexer):
         ),
     ]
 
-    @validator("categories", "anime_categories")
+    @field_validator("categories", "anime_categories")
+    @classmethod
     def validate_categories(
         cls,
         value: Iterable[Union[NabCategory, int]],
@@ -1053,29 +1055,28 @@ class SonarrIndexersSettingsConfig(SonarrConfigBase):
     [WikiArr](https://wiki.servarr.com/sonarr/faq#how-does-sonarr-find-episodes).
     """
 
-    minimum_age: int = Field(0, ge=0)  # minutes
+    minimum_age: NonNegativeInt = 0  # minutes
     """
     Minimum age (in minutes) of NZBs before they are grabbed. (Usenet only)
 
     Use this to give new releases time to propagate to your Usenet provider.
     """
 
-    retention: int = Field(0, ge=0)  # days
+    retention: NonNegativeInt = 0  # days
     """
     Retention of releases. (Usenet only)
 
     Set to `0` for unlimited retention.
     """
 
-    # Set to 0 for unlimited
-    maximum_size: int = Field(0, ge=0)  # MB
+    maximum_size: NonNegativeInt = 0  # MB
     """
     Maximum size for a release to be grabbed, in megabytes (MB).
 
     Set to `0` to set for unlimited size.
     """
 
-    rss_sync_interval: int = Field(15, ge=0)  # minutes
+    rss_sync_interval: NonNegativeInt = 15  # minutes
     """
     Interval (in minutes) to sync RSS feeds with indexers.
 
@@ -1098,7 +1099,7 @@ class SonarrIndexersSettingsConfig(SonarrConfigBase):
     Indexers to manage via Buildarr are defined here.
     """
 
-    _remote_map: List[RemoteMapEntry] = [
+    _remote_map: ClassVar[List[RemoteMapEntry]] = [
         ("minimum_age", "minimumAge", {}),
         ("retention", "retention", {}),
         ("maximum_size", "maximumSize", {}),
